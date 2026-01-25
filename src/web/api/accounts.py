@@ -134,7 +134,7 @@ class PositionResponse(BaseModel):
     cost_price: float
     quantity: int
     invested_amount: float | None
-    trading_style: str
+    trading_style: str | None
     # 关联信息
     account_name: str | None = None
     stock_symbol: str | None = None
