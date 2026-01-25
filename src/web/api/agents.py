@@ -129,7 +129,12 @@ def get_agent_history(agent_name: str, limit: int = 20, db: Session = Depends(ge
 @router.post("/intraday/scan")
 async def scan_intraday(analyze: bool = False, db: Session = Depends(get_db)):
     """
-    实时扫描所有自选股的异动情况（供首页调用）
+    实时扫描盘中监测 Agent 关联的股票异动情况
+
+    设计说明：
+    - 只扫描启用了「盘中监测」Agent 的股票
+    - 如果没有关联股票，返回提示信息
+    - analyze=True 时调用 AI 分析
 
     Args:
         analyze: 是否调用 AI 分析生成操作建议（默认 False）
@@ -137,23 +142,25 @@ async def scan_intraday(analyze: bool = False, db: Session = Depends(get_db)):
     from server import (
         load_watchlist_for_agent,
         load_portfolio_for_agent,
-        _get_proxy,
-        resolve_ai_model,
-        _build_ai_client,
+        build_context,
     )
-    from src.config import Settings
     from src.collectors.akshare_collector import AkshareCollector
     from src.models.market import MarketCode, MARKETS
+    from src.agents.intraday_monitor import IntradayMonitorAgent
 
     agent_name = "intraday_monitor"
+
+    # 只获取关联了盘中监测 Agent 的股票
     watchlist = load_watchlist_for_agent(agent_name)
 
-    # 如果盘中监测没有关联股票，使用 daily_report 的
     if not watchlist:
-        watchlist = load_watchlist_for_agent("daily_report")
-
-    if not watchlist:
-        return {"alerts": [], "message": "无自选股", "scanned_count": 0, "alert_count": 0}
+        return {
+            "alerts": [],
+            "message": "请先为股票启用「盘中监测」Agent",
+            "scanned_count": 0,
+            "alert_count": 0,
+            "has_watchlist": False,
+        }
 
     # 检查是否有市场在交易
     any_trading = any(m.is_trading_time() for m in MARKETS.values())
@@ -164,19 +171,16 @@ async def scan_intraday(analyze: bool = False, db: Session = Depends(get_db)):
             "scanned_count": len(watchlist),
             "alert_count": 0,
             "is_trading": False,
+            "has_watchlist": True,
         }
 
     # 获取持仓信息
     portfolio = load_portfolio_for_agent(agent_name)
-    if not portfolio.accounts:
-        portfolio = load_portfolio_for_agent("daily_report")
 
     # 按市场分组采集行情
     market_symbols: dict[MarketCode, list] = {}
-    symbol_to_stock = {}
     for stock in watchlist:
         market_symbols.setdefault(stock.market, []).append(stock.symbol)
-        symbol_to_stock[stock.symbol] = stock
 
     all_quotes = []
     for market_code, symbols in market_symbols.items():
@@ -221,35 +225,50 @@ async def scan_intraday(analyze: bool = False, db: Session = Depends(get_db)):
             "suggestion": None,
         })
 
-    # AI 分析（可选）
+    # AI 分析：使用 Agent 进行分析
     if analyze and alerts:
-        settings = Settings()
-        proxy = _get_proxy() or settings.http_proxy
-        model, service = resolve_ai_model(agent_name)
-
-        if model and service:
-            ai_client = _build_ai_client(model, service, proxy)
+        try:
+            context = build_context(agent_name)
+            agent = IntradayMonitorAgent()
 
             for alert in alerts:
                 if not alert["has_position"]:
                     continue
                 try:
-                    prompt = f"""股票 {alert['name']}({alert['symbol']}) 今日{alert['alert_type']}，涨跌幅 {alert['change_pct']:+.2f}%。
-当前价格: {alert['current_price']}
-持仓成本: {alert['cost_price']}
-持仓盈亏: {alert['pnl_pct']:+.1f}%
-交易风格: {alert['trading_style'] or '波段'}
-
-请简要分析是否需要操作（20字以内）。"""
-                    suggestion = await ai_client.chat("你是股票分析助手，给出简洁建议。", prompt)
-                    alert["suggestion"] = suggestion.strip()[:50]
+                    # 构建单只股票的上下文
+                    from src.models.market import StockData
+                    stock_data = StockData(
+                        symbol=alert["symbol"],
+                        name=alert["name"],
+                        market=MarketCode.CN,
+                        current_price=alert["current_price"],
+                        change_pct=alert["change_pct"],
+                        change_amount=0,
+                        volume=0,
+                        turnover=0,
+                        open_price=0,
+                        high_price=0,
+                        low_price=0,
+                        prev_close=0,
+                    )
+                    data = {"stock_data": stock_data, "stocks": [stock_data]}
+                    system_prompt, user_content = agent.build_prompt(data, context)
+                    suggestion = await context.ai_client.chat(system_prompt, user_content)
+                    # 提取关键建议（去掉 [无需提醒] 标记等）
+                    suggestion = suggestion.strip()
+                    if suggestion.startswith("[无需提醒]"):
+                        suggestion = suggestion[6:].strip()
+                    alert["suggestion"] = suggestion[:100] if len(suggestion) > 100 else suggestion
                 except Exception as e:
-                    alert["suggestion"] = f"分析失败"
-                    logger.error(f"AI 分析失败: {e}")
+                    alert["suggestion"] = f"分析失败: {e}"
+                    logger.error(f"AI 分析失败 {alert['symbol']}: {e}")
+        except Exception as e:
+            logger.error(f"构建 Agent 上下文失败: {e}")
 
     return {
         "alerts": alerts,
         "scanned_count": len(watchlist),
         "alert_count": len(alerts),
         "is_trading": True,
+        "has_watchlist": True,
     }
