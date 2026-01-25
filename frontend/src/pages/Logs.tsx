@@ -108,23 +108,24 @@ export default function LogsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h1 className="text-[22px] font-bold text-foreground tracking-tight">日志</h1>
-          <p className="text-[13px] text-muted-foreground mt-1">后台运行日志与调试信息</p>
+          <h1 className="text-[20px] md:text-[22px] font-bold text-foreground tracking-tight">日志</h1>
+          <p className="text-[12px] md:text-[13px] text-muted-foreground mt-0.5 md:mt-1">后台运行日志与调试信息</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant={autoRefresh ? 'default' : 'secondary'}
             size="sm"
+            className="h-8"
             onClick={() => setAutoRefresh(!autoRefresh)}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${autoRefresh ? 'animate-spin' : ''}`} />
-            自动刷新
+            <span className="hidden sm:inline">自动刷新</span>
           </Button>
-          <Button variant="ghost" size="sm" className="hover:text-destructive hover:bg-destructive/8" onClick={handleClear}>
+          <Button variant="ghost" size="sm" className="h-8 hover:text-destructive hover:bg-destructive/8" onClick={handleClear}>
             <Trash2 className="w-3.5 h-3.5" />
-            清空
+            <span className="hidden sm:inline">清空</span>
           </Button>
         </div>
       </div>
@@ -146,9 +147,9 @@ export default function LogsPage() {
             <button
               key={level}
               onClick={() => toggleLevel(level)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-medium transition-all ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
                 selectedLevels.includes(level)
-                  ? 'bg-gradient-to-r from-primary to-[hsl(260,70%,55%)] text-white shadow-[0_2px_6px_rgba(79,70,229,0.25)]'
+                  ? 'bg-primary text-white'
                   : 'bg-accent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -163,9 +164,9 @@ export default function LogsPage() {
             <button
               key={range.value}
               onClick={() => { setTimeRange(range.value); setOffset(0) }}
-              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-medium transition-all ${
+              className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
                 timeRange === range.value
-                  ? 'bg-gradient-to-r from-primary to-[hsl(260,70%,55%)] text-white shadow-[0_2px_6px_rgba(79,70,229,0.25)]'
+                  ? 'bg-primary text-white'
                   : 'bg-accent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -184,7 +185,7 @@ export default function LogsPage() {
         </div>
       ) : logs.length === 0 ? (
         <div className="card flex flex-col items-center justify-center py-20">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-[hsl(260,70%,55%)]/10 flex items-center justify-center mb-4">
+          <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
             <ScrollText className="w-6 h-6 text-primary" />
           </div>
           <p className="text-[15px] font-semibold text-foreground">暂无日志</p>

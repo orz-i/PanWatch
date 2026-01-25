@@ -305,10 +305,10 @@ export default function DashboardPage() {
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-[22px] font-bold text-foreground tracking-tight">Dashboard</h1>
-          <div className="flex items-center gap-3 mt-1.5">
+          <h1 className="text-[20px] md:text-[22px] font-bold text-foreground tracking-tight">Dashboard</h1>
+          <div className="flex items-center gap-2 md:gap-3 mt-1.5 flex-wrap">
             {marketStatus.map(m => {
               const statusColors: Record<string, string> = {
                 trading: 'bg-emerald-500',
@@ -320,12 +320,12 @@ export default function DashboardPage() {
               return (
                 <div
                   key={m.code}
-                  className="flex items-center gap-1.5"
+                  className="flex items-center gap-1"
                   title={`${m.sessions.join(', ')} (${m.local_time})`}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${statusColors[m.status] || 'bg-slate-400'}`} />
-                  <span className="text-[12px] text-muted-foreground">{m.name}</span>
-                  <span className={`text-[11px] ${m.is_trading ? 'text-emerald-600' : 'text-muted-foreground/60'}`}>
+                  <span className="text-[11px] md:text-[12px] text-muted-foreground">{m.name}</span>
+                  <span className={`text-[10px] md:text-[11px] ${m.is_trading ? 'text-emerald-600' : 'text-muted-foreground/60'}`}>
                     {m.status_text}
                   </span>
                 </div>
@@ -333,19 +333,19 @@ export default function DashboardPage() {
             })}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Auto Refresh & AI Analysis Controls */}
-          <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-accent/30">
-            <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2 md:gap-3 px-2 md:px-3 py-1.5 rounded-lg bg-accent/30">
+            <div className="flex items-center gap-1 md:gap-1.5">
               <Switch
                 checked={autoRefresh}
                 onCheckedChange={setAutoRefresh}
                 className="scale-90"
               />
-              <span className="text-[12px] text-muted-foreground">自动刷新</span>
+              <span className="text-[11px] md:text-[12px] text-muted-foreground hidden sm:inline">自动刷新</span>
               {autoRefresh && (
                 <Select value={refreshInterval.toString()} onValueChange={v => setRefreshInterval(parseInt(v))}>
-                  <SelectTrigger className="h-6 w-16 text-[11px] px-2">
+                  <SelectTrigger className="h-6 w-14 md:w-16 text-[10px] md:text-[11px] px-1.5 md:px-2">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -357,24 +357,24 @@ export default function DashboardPage() {
                 </Select>
               )}
             </div>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-1.5">
+            <div className="w-px h-4 bg-border hidden sm:block" />
+            <div className="flex items-center gap-1 md:gap-1.5">
               <Switch
                 checked={enableAIAnalysis}
                 onCheckedChange={setEnableAIAnalysis}
                 className="scale-90"
               />
-              <span className="text-[12px] text-muted-foreground">AI 建议</span>
+              <span className="text-[11px] md:text-[12px] text-muted-foreground hidden sm:inline">AI 建议</span>
             </div>
             {lastRefreshTime && (
-              <span className="text-[10px] text-muted-foreground/60">
+              <span className="text-[9px] md:text-[10px] text-muted-foreground/60 hidden md:inline">
                 {lastRefreshTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             )}
           </div>
-          <Button variant="secondary" onClick={handleRefresh} disabled={portfolioLoading || scanning || indicesLoading}>
+          <Button variant="secondary" size="sm" onClick={handleRefresh} disabled={portfolioLoading || scanning || indicesLoading} className="h-8 md:h-9 px-2.5 md:px-3">
             <RefreshCw className={`w-4 h-4 ${portfolioLoading || scanning || indicesLoading ? 'animate-spin' : ''}`} />
-            刷新
+            <span className="hidden sm:inline">刷新</span>
           </Button>
         </div>
       </div>
@@ -506,7 +506,7 @@ export default function DashboardPage() {
 
         {!hasWatchlist ? (
           <div className="card p-6 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 flex items-center justify-center mx-auto mb-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center mx-auto mb-3">
               <Zap className="w-5 h-5 text-amber-500" />
             </div>
             <p className="text-[14px] font-medium text-foreground mb-1">添加自选股后可查看异动</p>
@@ -596,7 +596,7 @@ export default function DashboardPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-[15px] font-semibold text-foreground flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-500" />
+            <Sparkles className="w-4 h-4 text-primary" />
             AI 洞察
           </h2>
           {(dailyReport || premarketOutlook) && (
@@ -617,8 +617,8 @@ export default function DashboardPage() {
           </div>
         ) : !dailyReport && !premarketOutlook ? (
           <div className="card p-6 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center mx-auto mb-3">
-              <Sparkles className="w-5 h-5 text-purple-500" />
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+              <Sparkles className="w-5 h-5 text-primary" />
             </div>
             <p className="text-[14px] font-medium text-foreground mb-1">暂无 AI 分析</p>
             <p className="text-[12px] text-muted-foreground mb-4">配置 AI 服务后，启用盘后日报或盘前分析 Agent</p>
@@ -723,9 +723,9 @@ export default function DashboardPage() {
         </div>
 
         {!hasWatchlist ? (
-          <div className="card p-8 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-[hsl(260,70%,55%)]/10 flex items-center justify-center mx-auto mb-4">
-              <TrendingUp className="w-6 h-6 text-primary" />
+          <div className="card p-6 md:p-8 text-center">
+            <div className="w-12 md:w-14 h-12 md:h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3 md:mb-4">
+              <TrendingUp className="w-5 md:w-6 h-5 md:h-6 text-primary" />
             </div>
             <p className="text-[15px] font-medium text-foreground mb-1">还没有添加自选股</p>
             <p className="text-[13px] text-muted-foreground mb-4">添加股票后，这里会显示实时行情和异动提醒</p>
@@ -776,7 +776,7 @@ export default function DashboardPage() {
       {/* Empty Portfolio Hint */}
       {!hasPortfolio && hasWatchlist && (
         <div className="card p-6 text-center border-dashed">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center mx-auto mb-3">
+          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-3">
             <Wallet className="w-5 h-5 text-blue-500" />
           </div>
           <p className="text-[14px] font-medium text-foreground mb-1">添加持仓查看盈亏</p>

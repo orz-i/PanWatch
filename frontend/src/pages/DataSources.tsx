@@ -174,16 +174,14 @@ export default function DataSourcesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-[22px] font-bold text-foreground tracking-tight">数据源</h1>
-          <p className="text-[13px] text-muted-foreground mt-1">管理新闻、K线、资金流向和行情数据来源</p>
-        </div>
+      <div className="mb-4 md:mb-8">
+        <h1 className="text-[20px] md:text-[22px] font-bold text-foreground tracking-tight">数据源</h1>
+        <p className="text-[12px] md:text-[13px] text-muted-foreground mt-0.5 md:mt-1">管理新闻、K线、资金流向和行情数据来源</p>
       </div>
 
       <div className="space-y-6">
         {Object.entries(DATASOURCE_TYPES).map(([type, { label, icon: Icon, color }]) => (
-          <section key={type} className="card p-6">
+          <section key={type} className="card p-4 md:p-6">
             <div className="flex items-center gap-2 mb-4">
               <Icon className={`w-4 h-4 ${color}`} />
               <h3 className="text-[13px] font-semibold text-foreground">{label}</h3>

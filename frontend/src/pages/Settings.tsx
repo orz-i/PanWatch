@@ -366,18 +366,19 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-[22px] font-bold text-foreground tracking-tight">设置</h1>
-        <p className="text-[13px] text-muted-foreground mt-1">AI 服务商、模型、通知渠道与系统配置</p>
+      <div className="mb-4 md:mb-8">
+        <h1 className="text-[20px] md:text-[22px] font-bold text-foreground tracking-tight">设置</h1>
+        <p className="text-[12px] md:text-[13px] text-muted-foreground mt-0.5 md:mt-1">AI 服务商、模型、通知渠道与系统配置</p>
       </div>
 
       <div className="space-y-6">
         {/* AI Services + Models Section */}
-        <section className="card p-6">
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-[13px] font-semibold text-foreground">AI 服务商 & 模型</h3>
-            <Button size="sm" onClick={() => openServiceDialog()}>
-              <Plus className="w-3.5 h-3.5" /> 添加服务商
+        <section className="card p-4 md:p-6">
+          <div className="flex items-center justify-between mb-4 md:mb-5">
+            <h3 className="text-[12px] md:text-[13px] font-semibold text-foreground">AI 服务商 & 模型</h3>
+            <Button size="sm" className="h-8" onClick={() => openServiceDialog()}>
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">添加服务商</span>
             </Button>
           </div>
           {services.length === 0 ? (
@@ -451,11 +452,12 @@ export default function SettingsPage() {
         </section>
 
         {/* Notify Channel Section */}
-        <section className="card p-6">
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-[13px] font-semibold text-foreground">通知渠道</h3>
-            <Button size="sm" onClick={() => openChannelDialog()}>
-              <Plus className="w-3.5 h-3.5" /> 添加
+        <section className="card p-4 md:p-6">
+          <div className="flex items-center justify-between mb-4 md:mb-5">
+            <h3 className="text-[12px] md:text-[13px] font-semibold text-foreground">通知渠道</h3>
+            <Button size="sm" className="h-8" onClick={() => openChannelDialog()}>
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">添加</span>
             </Button>
           </div>
           {channels.length === 0 ? (
@@ -505,8 +507,8 @@ export default function SettingsPage() {
 
         {/* General Settings */}
         {settings.length > 0 && (
-          <section className="card p-6">
-            <h3 className="text-[13px] font-semibold text-foreground mb-5">系统</h3>
+          <section className="card p-4 md:p-6">
+            <h3 className="text-[12px] md:text-[13px] font-semibold text-foreground mb-4 md:mb-5">系统</h3>
             <div className="space-y-5">
               {settings.map(setting => {
                 const currentValue = edited[setting.key] ?? setting.value
@@ -524,11 +526,11 @@ export default function SettingsPage() {
                       <button
                         onClick={() => handleSave(setting.key)}
                         disabled={!isChanged || saving === setting.key}
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
                           saved === setting.key
                             ? 'bg-emerald-500/10 text-emerald-600'
                             : isChanged
-                              ? 'bg-gradient-to-r from-primary to-[hsl(260,70%,55%)] text-white shadow-[0_2px_8px_rgba(79,70,229,0.3)]'
+                              ? 'bg-primary text-white'
                               : 'text-muted-foreground/30'
                         }`}
                       >

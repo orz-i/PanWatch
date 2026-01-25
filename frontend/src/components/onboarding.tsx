@@ -62,7 +62,7 @@ export function Onboarding({ open, onComplete, hasStocks }: OnboardingProps) {
         <div className="p-6 pt-4">
           {step === 'welcome' && (
             <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-[hsl(260,70%,55%)] flex items-center justify-center mx-auto mb-4 shadow-[0_4px_20px_rgba(79,70,229,0.3)]">
+              <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-[20px] font-bold text-foreground mb-2">
@@ -86,8 +86,8 @@ export function Onboarding({ open, onComplete, hasStocks }: OnboardingProps) {
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/30">
-                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-4 h-4 text-purple-500" />
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 text-primary" />
                   </div>
                   <div>
                     <p className="text-[13px] font-medium text-foreground">AI 智能分析</p>
@@ -121,7 +121,7 @@ export function Onboarding({ open, onComplete, hasStocks }: OnboardingProps) {
 
           {step === 'ai' && (
             <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 shadow-[0_4px_20px_rgba(168,85,247,0.3)]">
+              <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4">
                 <Bot className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-[20px] font-bold text-foreground mb-2">
@@ -133,15 +133,15 @@ export function Onboarding({ open, onComplete, hasStocks }: OnboardingProps) {
 
               <div className="space-y-2 text-left mb-6 p-4 rounded-xl bg-accent/30">
                 <div className="flex items-center gap-2 text-[13px]">
-                  <Sparkles className="w-4 h-4 text-purple-500" />
+                  <Sparkles className="w-4 h-4 text-primary" />
                   <span className="text-foreground">盘后日报自动分析</span>
                 </div>
                 <div className="flex items-center gap-2 text-[13px]">
-                  <Sparkles className="w-4 h-4 text-purple-500" />
+                  <Sparkles className="w-4 h-4 text-primary" />
                   <span className="text-foreground">异动 AI 建议</span>
                 </div>
                 <div className="flex items-center gap-2 text-[13px]">
-                  <Sparkles className="w-4 h-4 text-purple-500" />
+                  <Sparkles className="w-4 h-4 text-primary" />
                   <span className="text-foreground">技术图表分析</span>
                 </div>
               </div>
@@ -163,7 +163,7 @@ export function Onboarding({ open, onComplete, hasStocks }: OnboardingProps) {
 
           {step === 'notify' && (
             <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-[0_4px_20px_rgba(245,158,11,0.3)]">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500 flex items-center justify-center mx-auto mb-4">
                 <Bell className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-[20px] font-bold text-foreground mb-2">
@@ -205,7 +205,7 @@ export function Onboarding({ open, onComplete, hasStocks }: OnboardingProps) {
 
           {step === 'complete' && (
             <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mx-auto mb-4 shadow-[0_4px_20px_rgba(16,185,129,0.3)]">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-500 flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-[20px] font-bold text-foreground mb-2">

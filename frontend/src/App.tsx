@@ -25,14 +25,14 @@ function App() {
   const location = useLocation()
 
   return (
-    <div className="min-h-screen">
-      {/* Floating Nav */}
-      <div className="sticky top-0 z-50 px-6 pt-4 pb-2">
-        <header className="card px-5">
+    <div className="min-h-screen pb-16 md:pb-0">
+      {/* Desktop Floating Nav */}
+      <div className="sticky top-0 z-50 px-4 md:px-6 pt-3 md:pt-4 pb-2 hidden md:block">
+        <header className="card px-4 md:px-5">
           <div className="h-14 flex items-center justify-between">
             {/* Logo */}
             <NavLink to="/" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-[hsl(260,70%,55%)] flex items-center justify-center shadow-[0_2px_8px_rgba(79,70,229,0.25)]">
+              <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-white" />
               </div>
               <span className="text-[15px] font-bold text-foreground">PanWatch</span>
@@ -72,8 +72,51 @@ function App() {
         </header>
       </div>
 
+      {/* Mobile Top Bar */}
+      <div className="sticky top-0 z-50 px-4 pt-3 pb-2 md:hidden">
+        <header className="card px-4">
+          <div className="h-12 flex items-center justify-between">
+            <NavLink to="/" className="flex items-center gap-2 group">
+              <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+                <TrendingUp className="w-3.5 h-3.5 text-white" />
+              </div>
+              <span className="text-[14px] font-bold text-foreground">PanWatch</span>
+            </NavLink>
+            <button
+              onClick={toggleTheme}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          </div>
+        </header>
+      </div>
+
+      {/* Mobile Bottom Nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border px-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-center justify-around h-14">
+          {navItems.map(({ to, icon: Icon, label }) => {
+            const isActive = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                className={`flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors min-w-[48px] ${
+                  isActive
+                    ? 'text-primary'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium">{label}</span>
+              </NavLink>
+            )
+          })}
+        </div>
+      </nav>
+
       {/* Content */}
-      <main className="px-6 py-6">
+      <main className="px-4 md:px-6 py-4 md:py-6">
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/portfolio" element={<StocksPage />} />

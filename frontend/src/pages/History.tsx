@@ -83,21 +83,21 @@ export default function HistoryPage() {
   const sortedDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a))
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg">
-            <Clock className="w-5 h-5 text-white" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-amber-500 flex items-center justify-center">
+            <Clock className="w-4 h-4 md:w-5 md:h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">分析历史</h1>
-            <p className="text-[13px] text-muted-foreground">查看 AI 分析记录</p>
+            <h1 className="text-lg md:text-xl font-bold">分析历史</h1>
+            <p className="text-[12px] md:text-[13px] text-muted-foreground">查看 AI 分析记录</p>
           </div>
         </div>
 
         <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-          <SelectTrigger className="w-[160px] h-9">
+          <SelectTrigger className="w-full sm:w-[160px] h-9">
             <SelectValue placeholder="全部 Agent" />
           </SelectTrigger>
           <SelectContent>

@@ -696,43 +696,66 @@ export default function StocksPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-[22px] font-bold text-foreground tracking-tight">持仓</h1>
-          <div className="flex items-center gap-3 mt-1.5">
-            {marketStatus.map(m => {
-              const statusColors: Record<string, string> = {
-                trading: 'bg-emerald-500',
-                pre_market: 'bg-amber-500',
-                break: 'bg-amber-500',
-                after_hours: 'bg-slate-400',
-                closed: 'bg-slate-400',
-              }
-              return (
-                <div key={m.code} className="flex items-center gap-1.5" title={`${m.sessions.join(', ')} (${m.local_time})`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${statusColors[m.status] || 'bg-slate-400'}`} />
-                  <span className="text-[12px] text-muted-foreground">{m.name}</span>
-                  <span className={`text-[11px] ${m.is_trading ? 'text-emerald-600' : 'text-muted-foreground/60'}`}>
-                    {m.status_text}
-                  </span>
-                </div>
-              )
-            })}
+      <div className="flex flex-col gap-3 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[20px] md:text-[22px] font-bold text-foreground tracking-tight">持仓</h1>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {marketStatus.map(m => {
+                const statusColors: Record<string, string> = {
+                  trading: 'bg-emerald-500',
+                  pre_market: 'bg-amber-500',
+                  break: 'bg-amber-500',
+                  after_hours: 'bg-slate-400',
+                  closed: 'bg-slate-400',
+                }
+                return (
+                  <div key={m.code} className="flex items-center gap-1" title={`${m.sessions.join(', ')} (${m.local_time})`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${statusColors[m.status] || 'bg-slate-400'}`} />
+                    <span className="text-[11px] text-muted-foreground">{m.name}</span>
+                    <span className={`text-[10px] ${m.is_trading ? 'text-emerald-600' : 'text-muted-foreground/60'}`}>
+                      {m.status_text}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          {/* Desktop buttons */}
+          <div className="hidden md:flex items-center gap-2">
+            <Button variant="secondary" onClick={handleRefresh} disabled={portfolioLoading || scanning}>
+              <RefreshCw className={`w-4 h-4 ${portfolioLoading || scanning ? 'animate-spin' : ''}`} />
+              刷新
+            </Button>
+            <Button variant="secondary" onClick={() => openAccountDialog()}>
+              <Building2 className="w-4 h-4" /> 添加账户
+            </Button>
+            <Button onClick={() => { setStockForm(emptyStockForm); setSearchQuery(''); setShowStockForm(true) }}>
+              <Plus className="w-4 h-4" /> 添加股票
+            </Button>
+          </div>
+          {/* Mobile buttons */}
+          <div className="flex md:hidden items-center gap-1.5">
+            <Button variant="secondary" size="sm" className="h-8 w-8 p-0" onClick={handleRefresh} disabled={portfolioLoading || scanning}>
+              <RefreshCw className={`w-4 h-4 ${portfolioLoading || scanning ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button variant="secondary" size="sm" className="h-8 w-8 p-0" onClick={() => openAccountDialog()}>
+              <Building2 className="w-4 h-4" />
+            </Button>
+            <Button size="sm" className="h-8 w-8 p-0" onClick={() => { setStockForm(emptyStockForm); setSearchQuery(''); setShowStockForm(true) }}>
+              <Plus className="w-4 h-4" />
+            </Button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Auto Refresh & AI Analysis Controls */}
-          <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-accent/30">
-            <div className="flex items-center gap-1.5">
-              <Switch
-                checked={autoRefresh}
-                onCheckedChange={setAutoRefresh}
-                className="scale-90"
-              />
-              <span className="text-[12px] text-muted-foreground">自动刷新</span>
+        {/* Controls row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-accent/30">
+            <div className="flex items-center gap-1">
+              <Switch checked={autoRefresh} onCheckedChange={setAutoRefresh} className="scale-90" />
+              <span className="text-[11px] text-muted-foreground hidden sm:inline">自动刷新</span>
               {autoRefresh && (
                 <Select value={refreshInterval.toString()} onValueChange={v => setRefreshInterval(parseInt(v))}>
-                  <SelectTrigger className="h-6 w-16 text-[11px] px-2">
+                  <SelectTrigger className="h-6 w-14 text-[10px] px-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -744,31 +767,17 @@ export default function StocksPage() {
                 </Select>
               )}
             </div>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-1.5">
-              <Switch
-                checked={enableAIAnalysis}
-                onCheckedChange={setEnableAIAnalysis}
-                className="scale-90"
-              />
-              <span className="text-[12px] text-muted-foreground">AI 建议</span>
+            <div className="w-px h-4 bg-border hidden sm:block" />
+            <div className="flex items-center gap-1">
+              <Switch checked={enableAIAnalysis} onCheckedChange={setEnableAIAnalysis} className="scale-90" />
+              <span className="text-[11px] text-muted-foreground hidden sm:inline">AI 建议</span>
             </div>
-            {lastRefreshTime && (
-              <span className="text-[10px] text-muted-foreground/60">
-                {lastRefreshTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </span>
-            )}
           </div>
-          <Button variant="secondary" onClick={handleRefresh} disabled={portfolioLoading || scanning}>
-            <RefreshCw className={`w-4 h-4 ${portfolioLoading || scanning ? 'animate-spin' : ''}`} />
-            刷新
-          </Button>
-          <Button variant="secondary" onClick={() => openAccountDialog()}>
-            <Building2 className="w-4 h-4" /> 添加账户
-          </Button>
-          <Button onClick={() => { setStockForm(emptyStockForm); setSearchQuery(''); setShowStockForm(true) }}>
-            <Plus className="w-4 h-4" /> 添加股票
-          </Button>
+          {lastRefreshTime && (
+            <span className="text-[10px] text-muted-foreground/60">
+              {lastRefreshTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          )}
         </div>
       </div>
 
@@ -993,7 +1002,7 @@ export default function StocksPage() {
       {/* Accounts & Positions */}
       {portfolio && portfolio.accounts.length === 0 ? (
         <div className="card flex flex-col items-center justify-center py-20">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-[hsl(260,70%,55%)]/10 flex items-center justify-center mb-4">
+          <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
             <Building2 className="w-6 h-6 text-primary" />
           </div>
           <p className="text-[15px] font-semibold text-foreground">还没有账户</p>
@@ -1005,77 +1014,163 @@ export default function StocksPage() {
             <div key={account.id} className="card overflow-hidden">
               {/* Account Header */}
               <div
-                className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/30 transition-colors"
+                className="flex flex-col md:flex-row md:items-center justify-between p-3 md:p-4 cursor-pointer hover:bg-accent/30 transition-colors gap-2"
                 onClick={() => toggleAccountExpanded(account.id)}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
                   {expandedAccounts.has(account.id) ? (
                     <ChevronDown className="w-4 h-4 text-muted-foreground" />
                   ) : (
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   )}
                   <Building2 className="w-4 h-4 text-primary" />
-                  <span className="text-[15px] font-semibold text-foreground">{account.name}</span>
-                  <span className="text-[12px] text-muted-foreground">
-                    {account.positions.length} 只持仓
+                  <span className="text-[14px] md:text-[15px] font-semibold text-foreground">{account.name}</span>
+                  <span className="text-[11px] md:text-[12px] text-muted-foreground">
+                    {account.positions.length} 只
                   </span>
                 </div>
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <div className="text-[11px] text-muted-foreground">市值</div>
-                    <div className="text-[13px] font-mono font-medium">{formatMoney(account.total_market_value)}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[11px] text-muted-foreground">盈亏</div>
-                    <div className={`text-[13px] font-mono font-medium ${account.total_pnl >= 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                      {account.total_pnl >= 0 ? '+' : ''}{formatMoney(account.total_pnl)}
-                      <span className="text-[11px] ml-1">({account.total_pnl_pct >= 0 ? '+' : ''}{account.total_pnl_pct.toFixed(2)}%)</span>
+                <div className="flex items-center justify-between md:justify-end gap-3 md:gap-6 pl-6 md:pl-0">
+                  <div className="flex items-center gap-3 md:gap-6">
+                    <div className="text-left md:text-right">
+                      <div className="text-[10px] md:text-[11px] text-muted-foreground">市值</div>
+                      <div className="text-[12px] md:text-[13px] font-mono font-medium">{formatMoney(account.total_market_value)}</div>
+                    </div>
+                    <div className="text-left md:text-right">
+                      <div className="text-[10px] md:text-[11px] text-muted-foreground">盈亏</div>
+                      <div className={`text-[12px] md:text-[13px] font-mono font-medium ${account.total_pnl >= 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                        {account.total_pnl >= 0 ? '+' : ''}{formatMoney(account.total_pnl)}
+                        <span className="text-[10px] md:text-[11px] ml-1">({account.total_pnl_pct >= 0 ? '+' : ''}{account.total_pnl_pct.toFixed(2)}%)</span>
+                      </div>
+                    </div>
+                    <div className="text-left md:text-right hidden sm:block">
+                      <div className="text-[10px] md:text-[11px] text-muted-foreground">可用</div>
+                      <div className="text-[12px] md:text-[13px] font-mono">{formatMoney(account.available_funds)}</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-[11px] text-muted-foreground">可用</div>
-                    <div className="text-[13px] font-mono">{formatMoney(account.available_funds)}</div>
-                  </div>
-                  <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openPositionDialog(account.id)}>
-                      <Plus className="w-3.5 h-3.5" />
+                  <div className="flex items-center gap-0.5 md:gap-1" onClick={e => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8" onClick={() => openPositionDialog(account.id)}>
+                      <Plus className="w-3 md:w-3.5 h-3 md:h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openAccountDialog(accounts.find(a => a.id === account.id))}>
-                      <Pencil className="w-3.5 h-3.5" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8" onClick={() => openAccountDialog(accounts.find(a => a.id === account.id))}>
+                      <Pencil className="w-3 md:w-3.5 h-3 md:h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDeleteAccount(account.id)}>
-                      <Trash2 className="w-3.5 h-3.5" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 hover:text-destructive" onClick={() => handleDeleteAccount(account.id)}>
+                      <Trash2 className="w-3 md:w-3.5 h-3 md:h-3.5" />
                     </Button>
                   </div>
                 </div>
               </div>
 
-              {/* Positions Table */}
+              {/* Positions */}
               {expandedAccounts.has(account.id) && (
                 <div className="border-t border-border/30">
                   {account.positions.length === 0 ? (
                     <p className="text-[13px] text-muted-foreground text-center py-8">暂无持仓，点击 + 添加</p>
                   ) : (
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-border/30 bg-accent/20">
-                          <th className="text-left px-4 py-2 text-[11px] font-semibold text-muted-foreground">股票</th>
-                          <th className="text-right px-4 py-2 text-[11px] font-semibold text-muted-foreground">现价</th>
-                          <th className="text-right px-4 py-2 text-[11px] font-semibold text-muted-foreground">涨跌</th>
-                          <th className="text-right px-4 py-2 text-[11px] font-semibold text-muted-foreground">成本</th>
-                          <th className="text-right px-4 py-2 text-[11px] font-semibold text-muted-foreground">持仓</th>
-                          <th className="text-right px-4 py-2 text-[11px] font-semibold text-muted-foreground">市值</th>
-                          <th className="text-right px-4 py-2 text-[11px] font-semibold text-muted-foreground">盈亏</th>
-                          <th className="text-center px-4 py-2 text-[11px] font-semibold text-muted-foreground">风格</th>
-                          <th className="text-left px-4 py-2 text-[11px] font-semibold text-muted-foreground">Agent</th>
-                          <th className="text-center px-4 py-2 text-[11px] font-semibold text-muted-foreground">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {account.positions.map((pos, i) => {
+                    <>
+                      {/* Desktop Table */}
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-border/30 bg-accent/20">
+                              <th className="text-left px-4 py-2 text-[11px] font-semibold text-muted-foreground">股票</th>
+                              <th className="text-right px-4 py-2 text-[11px] font-semibold text-muted-foreground">现价</th>
+                              <th className="text-right px-4 py-2 text-[11px] font-semibold text-muted-foreground">涨跌</th>
+                              <th className="text-right px-4 py-2 text-[11px] font-semibold text-muted-foreground">成本</th>
+                              <th className="text-right px-4 py-2 text-[11px] font-semibold text-muted-foreground">持仓</th>
+                              <th className="text-right px-4 py-2 text-[11px] font-semibold text-muted-foreground">市值</th>
+                              <th className="text-right px-4 py-2 text-[11px] font-semibold text-muted-foreground">盈亏</th>
+                              <th className="text-center px-4 py-2 text-[11px] font-semibold text-muted-foreground">风格</th>
+                              <th className="text-left px-4 py-2 text-[11px] font-semibold text-muted-foreground">Agent</th>
+                              <th className="text-center px-4 py-2 text-[11px] font-semibold text-muted-foreground">操作</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {account.positions.map((pos, i) => {
+                              const stock = stocks.find(s => s.id === pos.stock_id)
+                              const badge = marketBadge(pos.market)
+                              const isForeign = pos.market === 'HK' || pos.market === 'US'
+                              const changeColor = pos.change_pct != null
+                                ? (pos.change_pct > 0 ? 'text-rose-500' : pos.change_pct < 0 ? 'text-emerald-500' : 'text-muted-foreground')
+                                : 'text-muted-foreground'
+                              const pnlColor = pos.pnl != null
+                                ? (pos.pnl > 0 ? 'text-rose-500' : pos.pnl < 0 ? 'text-emerald-500' : 'text-muted-foreground')
+                                : 'text-muted-foreground'
+                              return (
+                                <tr key={pos.id} className={`group hover:bg-accent/30 transition-colors ${i > 0 ? 'border-t border-border/20' : ''}`}>
+                                  <td className="px-4 py-2.5">
+                                    <span className={`text-[9px] px-1 py-0.5 rounded mr-1.5 ${badge.style}`}>{badge.label}</span>
+                                    <span className="font-mono text-[12px] font-semibold text-foreground">{pos.symbol}</span>
+                                    <span className="ml-1.5 text-[12px] text-muted-foreground">{pos.name}</span>
+                                  </td>
+                                  <td className={`px-4 py-2.5 text-right font-mono text-[12px] ${changeColor}`}>
+                                    {pos.current_price != null ? <span>{pos.current_price.toFixed(2)}{isForeign ? (pos.market === 'HK' ? ' HKD' : ' USD') : ''}</span> : '—'}
+                                  </td>
+                                  <td className={`px-4 py-2.5 text-right font-mono text-[12px] ${changeColor}`}>
+                                    {pos.change_pct != null ? `${pos.change_pct >= 0 ? '+' : ''}${pos.change_pct.toFixed(2)}%` : '—'}
+                                  </td>
+                                  <td className="px-4 py-2.5 text-right font-mono text-[12px] text-muted-foreground">{formatPrice(pos.cost_price)}</td>
+                                  <td className="px-4 py-2.5 text-right font-mono text-[12px] text-muted-foreground">{pos.quantity}</td>
+                                  <td className="px-4 py-2.5 text-right font-mono text-[12px] text-muted-foreground">
+                                    {pos.market_value != null ? (
+                                      <div className="flex flex-col items-end">
+                                        {isForeign ? (
+                                          <>
+                                            <span>{formatMoney(pos.market_value)} {pos.market === 'HK' ? 'HKD' : 'USD'}</span>
+                                            {pos.market_value_cny && <span className="text-[10px] text-muted-foreground/60">≈{formatMoney(pos.market_value_cny)}</span>}
+                                          </>
+                                        ) : <span>{formatMoney(pos.market_value)}</span>}
+                                      </div>
+                                    ) : '—'}
+                                  </td>
+                                  <td className={`px-4 py-2.5 text-right font-mono text-[12px] ${pnlColor}`}>
+                                    {pos.pnl != null ? (
+                                      <div className="flex flex-col items-end">
+                                        <span>{pos.pnl >= 0 ? '+' : ''}{formatMoney(pos.pnl)}</span>
+                                        <span className="text-[10px] opacity-70">{pos.pnl_pct != null ? `${pos.pnl_pct >= 0 ? '+' : ''}${pos.pnl_pct.toFixed(2)}%` : ''}{isForeign && ' CNY'}</span>
+                                      </div>
+                                    ) : '—'}
+                                  </td>
+                                  <td className="px-4 py-2.5 text-center">
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${pos.trading_style === 'short' ? 'bg-rose-500/10 text-rose-600' : pos.trading_style === 'long' ? 'bg-blue-500/10 text-blue-600' : 'bg-amber-500/10 text-amber-600'}`}>
+                                      {pos.trading_style === 'short' ? '短线' : pos.trading_style === 'long' ? '长线' : '波段'}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-2.5">
+                                    {stock && (
+                                      <button onClick={() => setAgentDialogStock(stock)} className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
+                                        {stock.agents && stock.agents.length > 0 ? (
+                                          <div className="flex items-center gap-1 flex-wrap">
+                                            {stock.agents.map(sa => {
+                                              const agent = agents.find(a => a.name === sa.agent_name)
+                                              return <Badge key={sa.agent_name} variant="default" className="text-[10px]">{agent?.display_name || sa.agent_name}</Badge>
+                                            })}
+                                          </div>
+                                        ) : (
+                                          <span className="text-[11px] text-muted-foreground/50 flex items-center gap-1"><Bot className="w-3 h-3" /> 未配置</span>
+                                        )}
+                                      </button>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-2.5 text-center">
+                                    <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openNewsDialog(pos.name)} title="相关资讯"><Newspaper className="w-3 h-3" /></Button>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openPositionDialog(account.id, pos)}><Pencil className="w-3 h-3" /></Button>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => handleDeletePosition(pos.id)}><Trash2 className="w-3 h-3" /></Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile Cards */}
+                      <div className="md:hidden divide-y divide-border/30">
+                        {account.positions.map(pos => {
                           const stock = stocks.find(s => s.id === pos.stock_id)
                           const badge = marketBadge(pos.market)
-                          const isForeign = pos.market === 'HK' || pos.market === 'US'
                           const changeColor = pos.change_pct != null
                             ? (pos.change_pct > 0 ? 'text-rose-500' : pos.change_pct < 0 ? 'text-emerald-500' : 'text-muted-foreground')
                             : 'text-muted-foreground'
@@ -1083,107 +1178,60 @@ export default function StocksPage() {
                             ? (pos.pnl > 0 ? 'text-rose-500' : pos.pnl < 0 ? 'text-emerald-500' : 'text-muted-foreground')
                             : 'text-muted-foreground'
                           return (
-                            <tr key={pos.id} className={`group hover:bg-accent/30 transition-colors ${i > 0 ? 'border-t border-border/20' : ''}`}>
-                              <td className="px-4 py-2.5">
-                                <span className={`text-[9px] px-1 py-0.5 rounded mr-1.5 ${badge.style}`}>
-                                  {badge.label}
-                                </span>
-                                <span className="font-mono text-[12px] font-semibold text-foreground">{pos.symbol}</span>
-                                <span className="ml-1.5 text-[12px] text-muted-foreground">{pos.name}</span>
-                              </td>
-                              <td className={`px-4 py-2.5 text-right font-mono text-[12px] ${changeColor}`}>
-                                {pos.current_price != null ? (
-                                  <span>{pos.current_price.toFixed(2)}{isForeign ? (pos.market === 'HK' ? ' HKD' : ' USD') : ''}</span>
-                                ) : '—'}
-                              </td>
-                              <td className={`px-4 py-2.5 text-right font-mono text-[12px] ${changeColor}`}>
-                                {pos.change_pct != null ? `${pos.change_pct >= 0 ? '+' : ''}${pos.change_pct.toFixed(2)}%` : '—'}
-                              </td>
-                              <td className="px-4 py-2.5 text-right font-mono text-[12px] text-muted-foreground">
-                                {formatPrice(pos.cost_price)}
-                              </td>
-                              <td className="px-4 py-2.5 text-right font-mono text-[12px] text-muted-foreground">
-                                {pos.quantity}
-                              </td>
-                              <td className="px-4 py-2.5 text-right font-mono text-[12px] text-muted-foreground">
-                                {pos.market_value != null ? (
-                                  <div className="flex flex-col items-end">
-                                    {isForeign ? (
-                                      <>
-                                        <span>{formatMoney(pos.market_value)} {pos.market === 'HK' ? 'HKD' : 'USD'}</span>
-                                        {pos.market_value_cny && (
-                                          <span className="text-[10px] text-muted-foreground/60">≈{formatMoney(pos.market_value_cny)}</span>
-                                        )}
-                                      </>
-                                    ) : (
-                                      <span>{formatMoney(pos.market_value)}</span>
-                                    )}
-                                  </div>
-                                ) : '—'}
-                              </td>
-                              <td className={`px-4 py-2.5 text-right font-mono text-[12px] ${pnlColor}`}>
-                                {pos.pnl != null ? (
-                                  <div className="flex flex-col items-end">
-                                    <span>{pos.pnl >= 0 ? '+' : ''}{formatMoney(pos.pnl)}</span>
-                                    <span className="text-[10px] opacity-70">
-                                      {pos.pnl_pct != null ? `${pos.pnl_pct >= 0 ? '+' : ''}${pos.pnl_pct.toFixed(2)}%` : ''}
-                                      {isForeign && ' CNY'}
-                                    </span>
-                                  </div>
-                                ) : '—'}
-                              </td>
-                              <td className="px-4 py-2.5 text-center">
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                                  pos.trading_style === 'short' ? 'bg-rose-500/10 text-rose-600' :
-                                  pos.trading_style === 'long' ? 'bg-blue-500/10 text-blue-600' :
-                                  'bg-amber-500/10 text-amber-600'
-                                }`}>
-                                  {pos.trading_style === 'short' ? '短线' : pos.trading_style === 'long' ? '长线' : '波段'}
-                                </span>
-                              </td>
-                              <td className="px-4 py-2.5">
-                                {stock && (
-                                  <button
-                                    onClick={() => { setAgentDialogStock(stock);  }}
-                                    className="flex items-center gap-1.5 hover:opacity-70 transition-opacity"
-                                  >
-                                    {stock.agents && stock.agents.length > 0 ? (
-                                      <div className="flex items-center gap-1 flex-wrap">
-                                        {stock.agents.map(sa => {
-                                          const agent = agents.find(a => a.name === sa.agent_name)
-                                          return (
-                                            <Badge key={sa.agent_name} variant="default" className="text-[10px]">
-                                              {agent?.display_name || sa.agent_name}
-                                            </Badge>
-                                          )
-                                        })}
-                                      </div>
-                                    ) : (
-                                      <span className="text-[11px] text-muted-foreground/50 flex items-center gap-1">
-                                        <Bot className="w-3 h-3" /> 未配置
-                                      </span>
-                                    )}
-                                  </button>
-                                )}
-                              </td>
-                              <td className="px-4 py-2.5 text-center">
-                                <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openNewsDialog(pos.name)} title="相关资讯">
-                                    <Newspaper className="w-3 h-3" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openPositionDialog(account.id, pos)}>
-                                    <Pencil className="w-3 h-3" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => handleDeletePosition(pos.id)}>
-                                    <Trash2 className="w-3 h-3" />
-                                  </Button>
+                            <div key={pos.id} className="p-3 hover:bg-accent/30 transition-colors">
+                              {/* Row 1: Stock info + Current price */}
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`text-[9px] px-1 py-0.5 rounded ${badge.style}`}>{badge.label}</span>
+                                  <span className="font-mono text-[12px] font-semibold text-foreground">{pos.symbol}</span>
+                                  <span className="text-[12px] text-muted-foreground">{pos.name}</span>
+                                  <span className={`text-[9px] px-1 py-0.5 rounded ${pos.trading_style === 'short' ? 'bg-rose-500/10 text-rose-600' : pos.trading_style === 'long' ? 'bg-blue-500/10 text-blue-600' : 'bg-amber-500/10 text-amber-600'}`}>
+                                    {pos.trading_style === 'short' ? '短' : pos.trading_style === 'long' ? '长' : '波'}
+                                  </span>
                                 </div>
-                              </td>
-                            </tr>
+                                <div className={`font-mono text-[13px] font-medium ${changeColor}`}>
+                                  {pos.current_price?.toFixed(2) || '—'}
+                                  {pos.change_pct != null && <span className="text-[11px] ml-1">{pos.change_pct >= 0 ? '+' : ''}{pos.change_pct.toFixed(2)}%</span>}
+                                </div>
+                              </div>
+                              {/* Row 2: Details */}
+                              <div className="flex items-center justify-between text-[11px]">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-muted-foreground">成本 <span className="font-mono text-foreground">{formatPrice(pos.cost_price)}</span></span>
+                                  <span className="text-muted-foreground">数量 <span className="font-mono text-foreground">{pos.quantity}</span></span>
+                                </div>
+                                <div className={`font-mono ${pnlColor}`}>
+                                  {pos.pnl != null ? `${pos.pnl >= 0 ? '+' : ''}${formatMoney(pos.pnl)}` : '—'}
+                                  {pos.pnl_pct != null && <span className="ml-1">({pos.pnl_pct >= 0 ? '+' : ''}{pos.pnl_pct.toFixed(2)}%)</span>}
+                                </div>
+                              </div>
+                              {/* Row 3: Actions */}
+                              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/20">
+                                <div>
+                                  {stock && stock.agents && stock.agents.length > 0 ? (
+                                    <button onClick={() => setAgentDialogStock(stock)} className="flex items-center gap-1">
+                                      {stock.agents.slice(0, 2).map(sa => {
+                                        const agent = agents.find(a => a.name === sa.agent_name)
+                                        return <Badge key={sa.agent_name} variant="secondary" className="text-[9px]">{agent?.display_name || sa.agent_name}</Badge>
+                                      })}
+                                    </button>
+                                  ) : (
+                                    <button onClick={() => stock && setAgentDialogStock(stock)} className="text-[10px] text-muted-foreground/50 flex items-center gap-1">
+                                      <Bot className="w-3 h-3" /> Agent
+                                    </button>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openNewsDialog(pos.name)}><Newspaper className="w-3 h-3" /></Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openPositionDialog(account.id, pos)}><Pencil className="w-3 h-3" /></Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => handleDeletePosition(pos.id)}><Trash2 className="w-3 h-3" /></Button>
+                                </div>
+                              </div>
+                            </div>
                           )
                         })}
-                      </tbody>
-                    </table>
+                      </div>
+                    </>
                   )}
                 </div>
               )}

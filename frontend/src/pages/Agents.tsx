@@ -195,14 +195,14 @@ export default function AgentsPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-[22px] font-bold text-foreground tracking-tight">Agent</h1>
-        <p className="text-[13px] text-muted-foreground mt-1">自动化任务管理与调度</p>
+      <div className="mb-4 md:mb-8">
+        <h1 className="text-[20px] md:text-[22px] font-bold text-foreground tracking-tight">Agent</h1>
+        <p className="text-[12px] md:text-[13px] text-muted-foreground mt-0.5 md:mt-1">自动化任务管理与调度</p>
       </div>
 
       {agents.length === 0 ? (
         <div className="card flex flex-col items-center justify-center py-20">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-[hsl(260,70%,55%)]/10 flex items-center justify-center mb-4">
+          <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
             <Bot className="w-6 h-6 text-primary" />
           </div>
           <p className="text-[15px] font-semibold text-foreground">暂无 Agent</p>
@@ -213,11 +213,11 @@ export default function AgentsPage() {
           {agents.map(agent => {
             const modeLabel = agent.execution_mode === 'single' ? '逐只分析' : '批量分析'
             return (
-              <div key={agent.name} className="card-hover p-6">
-                <div className="flex items-start justify-between gap-6">
+              <div key={agent.name} className="card-hover p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 sm:gap-6">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
-                      <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${agent.enabled ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-border'}`} />
+                      <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${agent.enabled ? 'bg-emerald-500' : 'bg-border'}`} />
                       <h3 className="text-[15px] font-semibold text-foreground">{agent.display_name}</h3>
                       <Badge variant="secondary" className="text-[10px]">{modeLabel}</Badge>
                     </div>
@@ -289,10 +289,11 @@ export default function AgentsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-[22px] sm:ml-0">
                     <Button
                       variant="secondary"
                       size="sm"
+                      className="h-8"
                       onClick={() => triggerAgent(agent.name)}
                       disabled={!agent.enabled || triggering === agent.name}
                     >
@@ -301,15 +302,16 @@ export default function AgentsPage() {
                       ) : (
                         <Play className="w-3.5 h-3.5" />
                       )}
-                      {triggering === agent.name ? '运行中' : '触发'}
+                      <span className="hidden sm:inline">{triggering === agent.name ? '运行中' : '触发'}</span>
                     </Button>
                     <Button
                       variant={agent.enabled ? 'destructive' : 'default'}
                       size="sm"
+                      className="h-8"
                       onClick={() => toggleAgent(agent)}
                     >
                       <Power className="w-3.5 h-3.5" />
-                      {agent.enabled ? '停用' : '启用'}
+                      <span className="hidden sm:inline">{agent.enabled ? '停用' : '启用'}</span>
                     </Button>
                   </div>
                 </div>

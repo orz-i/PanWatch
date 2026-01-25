@@ -106,16 +106,16 @@ export default function NewsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
-            <Newspaper className="w-5 h-5 text-white" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-blue-500 flex items-center justify-center">
+            <Newspaper className="w-4 h-4 md:w-5 md:h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">新闻中心</h1>
-            <p className="text-[13px] text-muted-foreground">实时财经快讯与个股公告</p>
+            <h1 className="text-lg md:text-xl font-bold">新闻中心</h1>
+            <p className="text-[12px] md:text-[13px] text-muted-foreground">实时财经快讯与个股公告</p>
           </div>
         </div>
 
@@ -124,23 +124,23 @@ export default function NewsPage() {
             variant={autoRefresh ? 'default' : 'outline'}
             size="sm"
             onClick={() => setAutoRefresh(!autoRefresh)}
-            className="gap-1.5"
+            className="gap-1.5 h-8"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${autoRefresh ? 'animate-spin' : ''}`} />
-            {autoRefresh ? '自动刷新中' : '自动刷新'}
+            <span className="hidden sm:inline">{autoRefresh ? '自动刷新中' : '自动刷新'}</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={loadNews} disabled={loading}>
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={loadNews} disabled={loading}>
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 md:gap-3">
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-muted-foreground" />
+          <Filter className="w-4 h-4 text-muted-foreground hidden sm:block" />
           <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-            <SelectTrigger className="w-[160px] h-9">
+            <SelectTrigger className="w-[130px] md:w-[160px] h-8 md:h-9 text-[12px] md:text-sm">
               <SelectValue placeholder="全部股票" />
             </SelectTrigger>
             <SelectContent>
@@ -155,9 +155,9 @@ export default function NewsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-muted-foreground" />
+          <Clock className="w-4 h-4 text-muted-foreground hidden sm:block" />
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[140px] h-9">
+            <SelectTrigger className="w-[100px] md:w-[140px] h-8 md:h-9 text-[12px] md:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -168,9 +168,8 @@ export default function NewsPage() {
           </Select>
         </div>
 
-        <div className="flex-1" />
-        <span className="text-[12px] text-muted-foreground">
-          共 {news.length} 条新闻
+        <span className="text-[11px] md:text-[12px] text-muted-foreground ml-auto">
+          共 {news.length} 条
         </span>
       </div>
 
