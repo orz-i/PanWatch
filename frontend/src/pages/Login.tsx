@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { TrendingUp, Lock, Eye, EyeOff } from 'lucide-react'
+import { TrendingUp, Lock, Eye, EyeOff, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,6 +11,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || ''
 export default function LoginPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -31,7 +32,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!password) return
+    if (!username || !password) return
 
     if (isSetup) {
       if (password !== confirmPassword) {
@@ -50,7 +51,7 @@ export default function LoginPage() {
       const res = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ username, password }),
       })
       const data = await res.json()
 
@@ -108,15 +109,30 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
+              <Label>用户名</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  placeholder="admin"
+                  className="pl-10"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div>
               <Label>{isSetup ? '设置密码' : '密码'}</Label>
               <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder={isSetup ? '至少 6 位' : '请输入密码'}
-                  className="pr-10"
-                  autoFocus
+                  className="pl-10 pr-10"
                 />
                 <Button
                   type="button"

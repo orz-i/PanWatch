@@ -27,10 +27,12 @@ PASSWORD_HASH_KEY = "auth_password_hash"
 
 
 class LoginRequest(BaseModel):
+    username: str
     password: str
 
 
 class SetupRequest(BaseModel):
+    username: str
     password: str
 
 
@@ -128,6 +130,9 @@ async def setup_password(data: SetupRequest, db: Session = Depends(get_db)):
     if get_password_hash(db):
         raise HTTPException(400, "密码已设置，请使用登录接口")
 
+    if data.username != "admin":
+        raise HTTPException(400, "用户名必须为 admin")
+
     if len(data.password) < 6:
         raise HTTPException(400, "密码长度至少 6 位")
 
@@ -145,8 +150,11 @@ async def login(data: LoginRequest, db: Session = Depends(get_db)):
     if not stored_hash:
         raise HTTPException(400, "请先设置密码")
 
+    if data.username != "admin":
+        raise HTTPException(401, "用户名或密码错误")
+
     if hash_password(data.password) != stored_hash:
-        raise HTTPException(401, "密码错误")
+        raise HTTPException(401, "用户名或密码错误")
 
     token, expires_at = create_token()
     return TokenResponse(token=token, expires_at=expires_at.isoformat())
