@@ -6,9 +6,17 @@ from pathlib import Path
 from src.agents.base import BaseAgent, AgentContext, AnalysisResult
 from src.collectors.akshare_collector import AkshareCollector
 from src.core.analysis_history import get_latest_analysis, get_analysis
-from src.models.market import MarketCode, StockData
+from src.models.market import MarketCode, StockData, MARKETS
 
 logger = logging.getLogger(__name__)
+
+
+def is_any_market_trading() -> bool:
+    """检查是否有任何市场正在交易"""
+    for market_def in MARKETS.values():
+        if market_def.is_trading_time():
+            return True
+    return False
 
 PROMPT_PATH = Path(__file__).parent.parent.parent / "prompts" / "intraday_monitor.txt"
 
@@ -38,6 +46,11 @@ class IntradayMonitorAgent(BaseAgent):
 
     async def collect(self, context: AgentContext) -> dict:
         """采集实时行情 + 历史分析"""
+        # 检查是否在交易时段
+        if not is_any_market_trading():
+            logger.info("当前非交易时段，跳过盘中监测")
+            return {"stocks": [], "stock_data": None, "skip_reason": "非交易时段"}
+
         if not context.watchlist:
             logger.warning("自选股列表为空，跳过盘中监测")
             return {"stocks": [], "stock_data": None}
@@ -164,6 +177,15 @@ class IntradayMonitorAgent(BaseAgent):
 
     async def analyze(self, context: AgentContext, data: dict) -> AnalysisResult:
         """AI 分析并判断是否需要提醒"""
+        # 非交易时段跳过
+        if data.get("skip_reason"):
+            return AnalysisResult(
+                agent_name=self.name,
+                title=f"【{self.display_name}】跳过",
+                content=data.get("skip_reason", "跳过执行"),
+                raw_data={"skipped": True, **data},
+            )
+
         stock: StockData | None = data.get("stock_data")
 
         if not stock:
@@ -212,6 +234,10 @@ class IntradayMonitorAgent(BaseAgent):
 
     async def should_notify(self, result: AnalysisResult) -> bool:
         """检查是否需要通知"""
+        # 跳过的结果不通知
+        if result.raw_data.get("skipped"):
+            return False
+
         # AI 判断不需要提醒
         if not result.raw_data.get("should_alert", True):
             logger.info(f"AI 判断无需提醒: {result.raw_data.get('stock', {}).get('symbol')}")
