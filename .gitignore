@@ -13,6 +13,7 @@ data/ca-bundle.pem
 dist/
 build/
 static/
+data/
 
 # Frontend
 node_modules/

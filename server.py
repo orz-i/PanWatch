@@ -73,14 +73,27 @@ def setup_logging():
 
 
 def setup_playwright():
-    """检查并安装 Playwright 浏览器到 data 目录"""
+    """检查并安装 Playwright 浏览器
+
+    本地开发时使用系统安装的 Playwright，Docker 环境下安装到 data 目录。
+    通过 DOCKER 环境变量或显式设置的 PLAYWRIGHT_BROWSERS_PATH 来判断。
+    """
     import subprocess
 
-    data_dir = os.environ.get("DATA_DIR", "./data")
-    browser_dir = os.path.join(data_dir, "playwright")
-
-    # 设置 Playwright 浏览器目录（供 playwright 库使用）
-    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = browser_dir
+    # 如果用户已显式设置 PLAYWRIGHT_BROWSERS_PATH，尊重该设置
+    if "PLAYWRIGHT_BROWSERS_PATH" in os.environ:
+        browser_dir = os.environ["PLAYWRIGHT_BROWSERS_PATH"]
+        logger.info(f"使用自定义 Playwright 路径: {browser_dir}")
+    # Docker 环境下安装到 data 目录
+    elif os.environ.get("DOCKER") == "1":
+        data_dir = os.environ.get("DATA_DIR", "./data")
+        browser_dir = os.path.join(data_dir, "playwright")
+        os.environ["PLAYWRIGHT_BROWSERS_PATH"] = browser_dir
+        logger.info(f"Docker 环境，Playwright 路径: {browser_dir}")
+    else:
+        # 本地开发，使用系统默认路径，不做任何安装
+        logger.info("本地开发环境，使用系统 Playwright")
+        return
 
     # 检查是否已安装
     if os.path.exists(browser_dir):

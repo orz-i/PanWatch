@@ -256,39 +256,71 @@ class IntradayMonitorAgent(BaseAgent):
         }
 
         # 检查是否无需提醒
-        if content.strip().startswith("[无需提醒]"):
+        if "[无需提醒]" in content:
             result["should_alert"] = False
             result["action"] = "hold"
             result["action_label"] = "持有"
             return result
 
-        # 提取建议类型
+        # 提取建议类型（从全文搜索）
         for label, action in SUGGESTION_TYPES.items():
             if label in content:
                 result["action"] = action
                 result["action_label"] = label
                 break
 
-        # 提取信号
-        signal_match = re.search(r"「信号」(.+?)(?=「|$)", content, re.DOTALL)
-        if signal_match:
-            result["signal"] = signal_match.group(1).strip()[:50]
+        # 提取信号（支持多种格式）
+        signal_patterns = [
+            r"「信号」\s*[:：]?\s*(.+?)(?=「|$|\n\n)",
+            r"\*\*信号\*\*\s*[:：]?\s*(.+?)(?=\*\*|$|\n\n)",
+            r"信号\s*[:：]\s*(.+?)(?=\n|$)",
+        ]
+        for pattern in signal_patterns:
+            match = re.search(pattern, content, re.DOTALL)
+            if match:
+                result["signal"] = match.group(1).strip()[:50]
+                break
 
-        # 提取建议内容
-        suggest_match = re.search(r"「建议」(.+?)(?=「|$)", content, re.DOTALL)
-        if suggest_match:
-            suggest_text = suggest_match.group(1).strip()
-            # 从建议中提取操作类型
-            for label, action in SUGGESTION_TYPES.items():
-                if label in suggest_text:
-                    result["action"] = action
-                    result["action_label"] = label
-                    break
+        # 提取建议内容（支持多种格式）
+        suggest_patterns = [
+            r"「建议」\s*[:：]?\s*(.+?)(?=「|$|\n\n)",
+            r"\*\*建议\*\*\s*[:：]?\s*(.+?)(?=\*\*|$|\n\n)",
+            r"建议\s*[:：]\s*(.+?)(?=\n|$)",
+        ]
+        for pattern in suggest_patterns:
+            match = re.search(pattern, content, re.DOTALL)
+            if match:
+                suggest_text = match.group(1).strip()
+                # 从建议中提取操作类型
+                for label, action in SUGGESTION_TYPES.items():
+                    if label in suggest_text:
+                        result["action"] = action
+                        result["action_label"] = label
+                        break
+                # 如果信号为空，使用建议内容作为信号
+                if not result["signal"]:
+                    result["signal"] = suggest_text[:50]
+                break
 
-        # 提取理由
-        reason_match = re.search(r"「理由」(.+?)(?=「|$)", content, re.DOTALL)
-        if reason_match:
-            result["reason"] = reason_match.group(1).strip()[:100]
+        # 提取理由（支持多种格式）
+        reason_patterns = [
+            r"「理由」\s*[:：]?\s*(.+?)(?=「|$|\n\n)",
+            r"\*\*理由\*\*\s*[:：]?\s*(.+?)(?=\*\*|$|\n\n)",
+            r"理由\s*[:：]\s*(.+?)(?=\n|$)",
+        ]
+        for pattern in reason_patterns:
+            match = re.search(pattern, content, re.DOTALL)
+            if match:
+                result["reason"] = match.group(1).strip()[:100]
+                break
+
+        # 如果没有提取到信号和理由，尝试使用整段内容的前部分
+        if not result["signal"] and not result["reason"]:
+            # 清理 markdown 格式后取前 100 字符
+            clean_content = re.sub(r'\*\*|##|#', '', content).strip()
+            # 跳过无需提醒的情况
+            if not clean_content.startswith("[无需提醒]"):
+                result["reason"] = clean_content[:100]
 
         return result
 

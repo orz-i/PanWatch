@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Plus, Trash2, Pencil, Search, X, TrendingUp, Bot, Play, RefreshCw, Wallet, PiggyBank, ArrowUpRight, ArrowDownRight, Building2, ChevronDown, ChevronRight, Zap, Cpu, Bell, Clock, Newspaper, ExternalLink } from 'lucide-react'
+import { Plus, Trash2, Pencil, Search, X, TrendingUp, Bot, Play, RefreshCw, Wallet, PiggyBank, ArrowUpRight, ArrowDownRight, Building2, ChevronDown, ChevronRight, Cpu, Bell, Clock, Newspaper, ExternalLink } from 'lucide-react'
 import { fetchAPI, useLocalStorage, type AIService, type NotifyChannel } from '@/lib/utils'
+import { SuggestionBadge, type SuggestionInfo, type KlineSummary } from '@/components/suggestion-badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -126,18 +127,11 @@ interface PositionForm {
   stock_market: string
 }
 
-interface AlertInfo {
+// 股票建议信息（来自盘中监控 API）
+interface StockSuggestionData {
   symbol: string
-  name: string
-  alert_type: string
-  current_price: number
-  change_pct: number
-  message: string
-  has_position: boolean
-  cost_price: number | null
-  pnl_pct: number | null
-  trading_style: string | null
-  suggestion: string | null
+  suggestion: SuggestionInfo | null
+  kline: KlineSummary | null
 }
 
 interface MarketStatus {
@@ -187,10 +181,13 @@ export default function StocksPage() {
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null)
   const refreshTimerRef = useRef<ReturnType<typeof setInterval>>()
 
-  // Alerts
-  const [alerts, setAlerts] = useState<AlertInfo[]>([])
+  // Alerts / Scanning
   const [scanning, setScanning] = useState(false)
   const [enableAIAnalysis, setEnableAIAnalysis] = useState(true)  // 是否启用 AI 分析建议
+
+  // 股票 AI 建议（来自盘中监控 API）
+  const [suggestions, setSuggestions] = useState<Record<string, StockSuggestionData>>({})
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
 
   // News Dialog
   const [newsDialogOpen, setNewsDialogOpen] = useState(false)
@@ -297,18 +294,38 @@ export default function StocksPage() {
     }
   }
 
-  // Scan for intraday alerts
+  // Scan for intraday alerts and load suggestions
   const scanAlerts = useCallback(async () => {
     setScanning(true)
+    setSuggestionsLoading(true)
     try {
       const url = enableAIAnalysis ? '/agents/intraday/scan?analyze=true' : '/agents/intraday/scan'
-      const result = await fetchAPI<{ alerts: AlertInfo[]; scanned_count: number; alert_count: number }>(url, { method: 'POST' })
-      setAlerts(result.alerts)
+      const result = await fetchAPI<{
+        stocks: Array<{
+          symbol: string
+          name: string
+          suggestion: SuggestionInfo | null
+          kline: KlineSummary | null
+        }>
+        scanned_count: number
+      }>(url, { method: 'POST' })
+
+      // 将结果转换为按 symbol 索引的 Map，方便持仓页面查找
+      const suggestionsMap: Record<string, StockSuggestionData> = {}
+      for (const stock of result.stocks || []) {
+        suggestionsMap[stock.symbol] = {
+          symbol: stock.symbol,
+          suggestion: stock.suggestion,
+          kline: stock.kline,
+        }
+      }
+      setSuggestions(suggestionsMap)
       setLastRefreshTime(new Date())
     } catch (e) {
       console.error('扫描异动失败:', e)
     } finally {
       setScanning(false)
+      setSuggestionsLoading(false)
     }
   }, [enableAIAnalysis])
 
@@ -343,6 +360,15 @@ export default function StocksPage() {
   }, [scanAlerts])
 
   useEffect(() => { load(); loadPortfolio() }, [])
+
+  // 持仓加载后自动获取 AI 建议
+  const initialSuggestionsDone = useRef(false)
+  useEffect(() => {
+    if (portfolio && portfolio.accounts.length > 0 && !initialSuggestionsDone.current) {
+      initialSuggestionsDone.current = true
+      scanAlerts()
+    }
+  }, [portfolio])
 
   // Auto-refresh timer
   useEffect(() => {
@@ -762,6 +788,12 @@ export default function StocksPage() {
               <div className="flex items-center gap-1.5">
                 <Switch checked={enableAIAnalysis} onCheckedChange={setEnableAIAnalysis} className="scale-90" />
                 <span className="text-[11px] text-muted-foreground">AI 建议</span>
+                {suggestionsLoading && (
+                  <span className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                )}
+                {!suggestionsLoading && Object.keys(suggestions).length > 0 && (
+                  <span className="text-[10px] text-primary">{Object.keys(suggestions).length}</span>
+                )}
               </div>
               {lastRefreshTime && (
                 <>
@@ -821,6 +853,9 @@ export default function StocksPage() {
             <div className="flex items-center gap-1">
               <Switch checked={enableAIAnalysis} onCheckedChange={setEnableAIAnalysis} className="scale-90" />
               <span className="text-[11px] text-muted-foreground">AI 建议</span>
+              {suggestionsLoading && (
+                <span className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+              )}
             </div>
           </div>
           {lastRefreshTime && (
@@ -876,80 +911,6 @@ export default function StocksPage() {
             <div className="text-[20px] font-bold text-foreground font-mono">
               {formatMoney(portfolio.total.total_assets)}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Intraday Alerts */}
-      {alerts.length > 0 && (
-        <div className="mb-6 card p-4 border-l-4 border-l-amber-500">
-          <div className="flex items-center gap-2 mb-3">
-            <Zap className="w-4 h-4 text-amber-500" />
-            <h3 className="text-[14px] font-semibold text-foreground">实时异动</h3>
-            <Badge variant="secondary" className="text-[10px]">{alerts.length} 只</Badge>
-          </div>
-          <div className="space-y-3">
-            {alerts.map(alert => {
-              const alertTypeLabels: Record<string, { label: string; color: string }> = {
-                price_surge: { label: '急涨', color: 'text-rose-500 bg-rose-500/10' },
-                price_drop: { label: '急跌', color: 'text-emerald-500 bg-emerald-500/10' },
-                volume_spike: { label: '放量', color: 'text-blue-500 bg-blue-500/10' },
-                near_stop_loss: { label: '止损预警', color: 'text-red-600 bg-red-500/10' },
-                near_take_profit: { label: '止盈提醒', color: 'text-amber-600 bg-amber-500/10' },
-              }
-              const styleLabels: Record<string, string> = { short: '短线', swing: '波段', long: '长线' }
-              const typeInfo = alertTypeLabels[alert.alert_type] || { label: alert.alert_type, color: 'text-muted-foreground bg-accent' }
-              const changeColor = alert.change_pct > 0 ? 'text-rose-500' : alert.change_pct < 0 ? 'text-emerald-500' : 'text-muted-foreground'
-
-              return (
-                <div key={alert.symbol} className="p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-[12px] font-semibold text-foreground">{alert.symbol}</span>
-                      <span className="text-[12px] text-muted-foreground">{alert.name}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${typeInfo.color}`}>
-                        {typeInfo.label}
-                      </span>
-                      {alert.has_position && alert.trading_style && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                          {styleLabels[alert.trading_style] || '波段'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <div className={`font-mono text-[13px] font-medium ${changeColor}`}>
-                          {alert.current_price.toFixed(2)}
-                        </div>
-                        <div className={`font-mono text-[11px] ${changeColor}`}>
-                          {alert.change_pct >= 0 ? '+' : ''}{alert.change_pct.toFixed(2)}%
-                        </div>
-                      </div>
-                      {alert.has_position && alert.pnl_pct != null && (
-                        <div className="text-right min-w-[60px]">
-                          <div className="text-[10px] text-muted-foreground">盈亏</div>
-                          <div className={`font-mono text-[12px] ${alert.pnl_pct >= 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                            {alert.pnl_pct >= 0 ? '+' : ''}{alert.pnl_pct.toFixed(2)}%
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {/* AI Suggestion */}
-                  {alert.suggestion && (
-                    <div className="mt-2 pt-2 border-t border-border/30">
-                      <div className="flex items-start gap-2">
-                        <Bot className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
-                        <p className="text-[12px] text-foreground whitespace-pre-line">{alert.suggestion}</p>
-                      </div>
-                    </div>
-                  )}
-                  {!alert.suggestion && alert.message && (
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">{alert.message}</p>
-                  )}
-                </div>
-              )
-            })}
           </div>
         </div>
       )}
@@ -1152,6 +1113,16 @@ export default function StocksPage() {
                                     <span className={`text-[9px] px-1 py-0.5 rounded mr-1.5 ${badge.style}`}>{badge.label}</span>
                                     <span className="font-mono text-[12px] font-semibold text-foreground">{pos.symbol}</span>
                                     <span className="ml-1.5 text-[12px] text-muted-foreground">{pos.name}</span>
+                                    {suggestions[pos.symbol]?.suggestion && (
+                                      <span className="ml-2">
+                                        <SuggestionBadge
+                                          suggestion={suggestions[pos.symbol].suggestion}
+                                          stockName={pos.name}
+                                          stockSymbol={pos.symbol}
+                                          kline={suggestions[pos.symbol].kline}
+                                        />
+                                      </span>
+                                    )}
                                   </td>
                                   <td className={`px-4 py-2.5 text-right font-mono text-[12px] ${changeColor}`}>
                                     {pos.current_price != null ? <span>{pos.current_price.toFixed(2)}{isForeign ? (pos.market === 'HK' ? ' HKD' : ' USD') : ''}</span> : '—'}
@@ -1235,7 +1206,7 @@ export default function StocksPage() {
                             <div key={pos.id} className="p-3 hover:bg-accent/30 transition-colors">
                               {/* Row 1: Stock info + Current price */}
                               <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
                                   <span className={`text-[9px] px-1 py-0.5 rounded ${badge.style}`}>{badge.label}</span>
                                   <span className="font-mono text-[12px] font-semibold text-foreground">{pos.symbol}</span>
                                   <span className="text-[12px] text-muted-foreground">{pos.name}</span>
@@ -1243,6 +1214,14 @@ export default function StocksPage() {
                                     <span className={`text-[9px] px-1 py-0.5 rounded ${pos.trading_style === 'short' ? 'bg-rose-500/10 text-rose-600' : pos.trading_style === 'long' ? 'bg-blue-500/10 text-blue-600' : 'bg-amber-500/10 text-amber-600'}`}>
                                       {pos.trading_style === 'short' ? '短' : pos.trading_style === 'long' ? '长' : '波'}
                                     </span>
+                                  )}
+                                  {suggestions[pos.symbol]?.suggestion && (
+                                    <SuggestionBadge
+                                      suggestion={suggestions[pos.symbol].suggestion}
+                                      stockName={pos.name}
+                                      stockSymbol={pos.symbol}
+                                      kline={suggestions[pos.symbol].kline}
+                                    />
                                   )}
                                 </div>
                                 <div className={`font-mono text-[13px] font-medium ${changeColor}`}>

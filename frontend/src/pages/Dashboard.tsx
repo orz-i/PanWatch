@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Onboarding } from '@/components/onboarding'
+import { SuggestionBadge, type SuggestionInfo, type KlineSummary } from '@/components/suggestion-badge'
 
 interface MarketIndex {
   symbol: string
@@ -61,28 +62,6 @@ interface AccountSummary {
   total_market_value: number
   total_pnl: number
   total_pnl_pct: number
-}
-
-interface SuggestionInfo {
-  action: string  // buy/add/reduce/sell/hold/watch
-  action_label: string
-  signal: string
-  reason: string
-  should_alert: boolean
-  raw?: string
-}
-
-interface KlineSummary {
-  trend: string
-  macd_status: string
-  recent_5_up: number
-  change_5d: number | null
-  change_20d: number | null
-  ma5: number | null
-  ma10: number | null
-  ma20: number | null
-  support: number | null
-  resistance: number | null
 }
 
 interface MonitorStock {
@@ -183,6 +162,15 @@ export default function DashboardPage() {
       setShowOnboarding(true)
     }
   }, [])
+
+  // 自选股加载后自动获取监控数据
+  const initialScanDone = useRef(false)
+  useEffect(() => {
+    if (hasWatchlist && !initialScanDone.current) {
+      initialScanDone.current = true
+      scanAlerts()
+    }
+  }, [hasWatchlist])
 
   // Auto-refresh timer
   useEffect(() => {
@@ -555,14 +543,6 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-3">
             {monitorStocks.map(stock => {
-              const actionColors: Record<string, string> = {
-                buy: 'bg-rose-500 text-white',
-                add: 'bg-rose-400 text-white',
-                reduce: 'bg-emerald-500 text-white',
-                sell: 'bg-emerald-600 text-white',
-                hold: 'bg-amber-500 text-white',
-                watch: 'bg-slate-500 text-white',
-              }
               const styleLabels: Record<string, string> = { short: '短线', swing: '波段', long: '长线' }
               const changeColor = stock.change_pct > 0 ? 'text-rose-500' : stock.change_pct < 0 ? 'text-emerald-500' : 'text-muted-foreground'
               const suggestion = stock.suggestion
@@ -630,23 +610,19 @@ export default function DashboardPage() {
                   )}
 
                   {/* AI Suggestion */}
-                  {suggestion && (
+                  {suggestion ? (
+                    <SuggestionBadge
+                      suggestion={suggestion}
+                      stockName={stock.name}
+                      stockSymbol={stock.symbol}
+                      kline={stock.kline}
+                      showFullInline={true}
+                    />
+                  ) : enableAIAnalysis ? (
                     <div className="pt-3 border-t border-border/30">
-                      <div className="flex items-start gap-3">
-                        <span className={`text-[11px] px-2 py-1 rounded font-medium ${actionColors[suggestion.action] || 'bg-slate-500 text-white'}`}>
-                          {suggestion.action_label}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          {suggestion.signal && (
-                            <p className="text-[12px] font-medium text-foreground mb-0.5">{suggestion.signal}</p>
-                          )}
-                          {suggestion.reason && (
-                            <p className="text-[11px] text-muted-foreground">{suggestion.reason}</p>
-                          )}
-                        </div>
-                      </div>
+                      <p className="text-[11px] text-muted-foreground/60">AI 分析中...</p>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               )
             })}
